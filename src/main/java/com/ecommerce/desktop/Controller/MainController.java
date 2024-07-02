@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,8 +19,6 @@ import com.ecommerce.desktop.Model.Product;
 import com.ecommerce.desktop.Model.Store;
 import com.ecommerce.desktop.Services.ProductManagement;
 import com.ecommerce.desktop.Services.StoreManagement;
-
-import jakarta.websocket.server.PathParam;
 
 @Controller
 @RequestMapping("/api")
@@ -48,7 +47,7 @@ public class MainController {
   }
 
   @PutMapping("/products/{id}")
-  public @ResponseBody ProductResponse updateProduct(@RequestBody Product product, @PathParam("id") String id) {
+  public @ResponseBody ProductResponse updateProduct(@RequestBody Product product, @PathVariable("id") String id) {
     ProductDTO productDTO = new ProductDTO(product.getName(), product.getDescription(), product.getCategory(),
         product.getPrice(), product.getStock(), product.getImage());
     if (productManagement.updateProduct(product, id)) {
@@ -59,13 +58,15 @@ public class MainController {
   }
 
   @DeleteMapping("/products/{id}")
-  public @ResponseBody ProductResponse deleteProduct(@PathParam("id") String id) {
+  public @ResponseBody ProductResponse deleteProduct(@PathVariable("id") String id) {
     if (productManagement.deleteProduct(id)) {
       return new ProductResponse(200, "Product deleted successfully", null);
     } else {
       return new ProductResponse(500, "Failed to delete product", null);
     }
   }
+
+  /// Store Management
 
   @PostMapping("/stores")
   public @ResponseBody StoreDTO addStore(@RequestBody Store newStore) {
@@ -77,7 +78,7 @@ public class MainController {
   }
 
   @GetMapping("/stores/{id}")
-  public @ResponseBody StoreDTO getStore(@PathParam("id") String id) {
+  public @ResponseBody StoreDTO getStore(@PathVariable("id") String id) {
     Store store = storeManagement.getStore(id);
     if (store != null) {
       return new StoreDTO(200, "Store fetched successfully", store);
@@ -87,7 +88,7 @@ public class MainController {
   }
 
   @PutMapping("/stores/{id}")
-  public @ResponseBody StoreDTO updateStore(@RequestBody Store updatedStore, @PathParam("id") String id) {
+  public @ResponseBody StoreDTO updateStore(@RequestBody Store updatedStore, @PathVariable("id") String id) {
     if (storeManagement.updateStore(updatedStore, id)) {
       return new StoreDTO(200, "Store updated successfully", updatedStore);
     } else {
@@ -96,12 +97,24 @@ public class MainController {
   }
 
   @DeleteMapping("/stores/{id}")
-  public @ResponseBody StoreDTO deleteStore(@PathParam("id") String id) {
+  public @ResponseBody StoreDTO deleteStore(@PathVariable("id") String id) {
     if (storeManagement.deleteStore(id)) {
       return new StoreDTO(200, "Store deleted successfully", null);
     } else {
       return new StoreDTO(500, "Failed to delete store", null);
     }
   }
+
+  @DeleteMapping("/stores/{id}/products/{productId}")
+  public @ResponseBody StoreDTO deleteProductById(@PathVariable("id") String id,
+      @PathVariable("productId") String productId) {
+    if (storeManagement.deleteProductById(id, productId)) {
+      return new StoreDTO(200, "Product deleted successfully", null);
+    } else {
+      return new StoreDTO(500, "Failed to delete product", null);
+    }
+  }
+
+  /// Cart Management
 
 }

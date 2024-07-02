@@ -10,4 +10,6 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 
   public List<Product> findByStoreId(String id);
 
+  public void deleteById(String id);
+
 }

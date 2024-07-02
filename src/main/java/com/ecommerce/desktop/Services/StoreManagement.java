@@ -61,4 +61,15 @@ public class StoreManagement {
     }
   }
 
+  public @ResponseBody boolean deleteProductById(String id, String productId) {
+    Store existingStore = storeCollections.findById(id).orElse(null);
+    if (existingStore != null) {
+      existingStore.getProductsData().removeIf(product -> product.getId().equals(productId));
+      storeCollections.save(existingStore);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
 }

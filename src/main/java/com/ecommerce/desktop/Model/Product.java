@@ -1,5 +1,7 @@
 package com.ecommerce.desktop.Model;
 
+import com.ecommerce.desktop.DTO.Volume;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +23,7 @@ public class Product {
   private String createdAt;
   private String updatedAt;
   private float rating;
+  private Volume volume;
   private String storeId;
 
 }
