@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.ecommerce.desktop.DTO.ProductDTO;
 import com.ecommerce.desktop.DTO.ProductFetchDTO;
 import com.ecommerce.desktop.DTO.ProductResponse;
+import com.ecommerce.desktop.DTO.StoreDTO;
 import com.ecommerce.desktop.Model.Product;
+import com.ecommerce.desktop.Model.Store;
 import com.ecommerce.desktop.Services.ProductManagement;
+import com.ecommerce.desktop.Services.StoreManagement;
 
 import jakarta.websocket.server.PathParam;
 
@@ -24,6 +27,9 @@ public class MainController {
 
   @Autowired
   private ProductManagement productManagement;
+
+  @Autowired
+  private StoreManagement storeManagement;
 
   @PostMapping("/products")
   public @ResponseBody ProductResponse addProduct(@RequestBody Product newProduct) {
@@ -58,6 +64,43 @@ public class MainController {
       return new ProductResponse(200, "Product deleted successfully", null);
     } else {
       return new ProductResponse(500, "Failed to delete product", null);
+    }
+  }
+
+  @PostMapping("/stores")
+  public @ResponseBody StoreDTO addStore(@RequestBody Store newStore) {
+    if (storeManagement.addStore(newStore)) {
+      return new StoreDTO(200, "Store added successfully", newStore);
+    } else {
+      return new StoreDTO(500, "Failed to add store", null);
+    }
+  }
+
+  @GetMapping("/stores/{id}")
+  public @ResponseBody StoreDTO getStore(@PathParam("id") String id) {
+    Store store = storeManagement.getStore(id);
+    if (store != null) {
+      return new StoreDTO(200, "Store fetched successfully", store);
+    } else {
+      return new StoreDTO(500, "Failed to fetch store", null);
+    }
+  }
+
+  @PutMapping("/stores/{id}")
+  public @ResponseBody StoreDTO updateStore(@RequestBody Store updatedStore, @PathParam("id") String id) {
+    if (storeManagement.updateStore(updatedStore, id)) {
+      return new StoreDTO(200, "Store updated successfully", updatedStore);
+    } else {
+      return new StoreDTO(500, "Failed to update store", null);
+    }
+  }
+
+  @DeleteMapping("/stores/{id}")
+  public @ResponseBody StoreDTO deleteStore(@PathParam("id") String id) {
+    if (storeManagement.deleteStore(id)) {
+      return new StoreDTO(200, "Store deleted successfully", null);
+    } else {
+      return new StoreDTO(500, "Failed to delete store", null);
     }
   }
 
