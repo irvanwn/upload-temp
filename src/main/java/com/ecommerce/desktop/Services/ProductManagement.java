@@ -57,4 +57,16 @@ public class ProductManagement {
     return collections.findAll();
   }
 
+  // Add Product with Batch
+  public @ResponseBody boolean addProductBatch(List<Product> products) {
+    for (Product product : products) {
+      String prefix = "prod-";
+      product.setId(prefix + Randomizer.generateRandomNumber(10));
+      product.setCreatedAt(new Date().toString());
+      product.setUpdatedAt(new Date().toString());
+    }
+    collections.saveAll(products);
+    return true;
+  }
+
 }

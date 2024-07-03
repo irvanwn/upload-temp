@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.ecommerce.desktop.DTO.ProductDTO;
 import com.ecommerce.desktop.DTO.ProductFetchDTO;
 import com.ecommerce.desktop.DTO.ProductResponse;
+import com.ecommerce.desktop.DTO.ResponseTemplate;
 import com.ecommerce.desktop.DTO.StoreDTO;
 import com.ecommerce.desktop.Model.Product;
 import com.ecommerce.desktop.Model.Store;
+import com.ecommerce.desktop.Services.CartManagement;
 import com.ecommerce.desktop.Services.ProductManagement;
 import com.ecommerce.desktop.Services.StoreManagement;
 
@@ -30,6 +32,9 @@ public class MainController {
   @Autowired
   private StoreManagement storeManagement;
 
+  @Autowired
+  private CartManagement cartManagement;
+
   @PostMapping("/products")
   public @ResponseBody ProductResponse addProduct(@RequestBody Product newProduct) {
     ProductDTO productDTO = new ProductDTO(newProduct.getName(), newProduct.getDescription(), newProduct.getCategory(),
@@ -39,6 +44,14 @@ public class MainController {
     } else {
       return new ProductResponse(500, "Failed to add product", null);
     }
+  }
+
+  @PostMapping("/products/batch")
+  public @ResponseBody ProductResponse addProductBatch(@RequestBody Product[] products) {
+    for (Product product : products) {
+      productManagement.addProduct(product);
+    }
+    return new ProductResponse(200, "Products added successfully", null);
   }
 
   @GetMapping("/products")
@@ -116,5 +129,34 @@ public class MainController {
   }
 
   /// Cart Management
+
+  @PostMapping("/cart/{UserId}")
+  public @ResponseBody ResponseTemplate makeCart(@PathVariable("UserId") String userId) {
+    if (cartManagement.makeCart(userId)) {
+      return new ResponseTemplate(200, "Cart created successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to create cart", null);
+    }
+  }
+
+  @PostMapping("/cart/{UserId}/products/{ProductId}/{Quantity}")
+  public @ResponseBody ResponseTemplate addProductToCart(@PathVariable("UserId") String userId,
+      @PathVariable("ProductId") String productId, @PathVariable("Quantity") int quantity) {
+    if (cartManagement.addProductToCart(userId, productId, quantity)) {
+      return new ResponseTemplate(200, "Product added to cart successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to add product to cart", null);
+    }
+  }
+
+  @DeleteMapping("/cart/{UserId}/products/{ProductId}")
+  public @ResponseBody ResponseTemplate removeProductFromCart(@PathVariable("UserId") String userId,
+      @PathVariable("ProductId") String productId) {
+    if (cartManagement.removeProductFromCart(userId, productId)) {
+      return new ResponseTemplate(200, "Product removed from cart successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to remove product from cart", null);
+    }
+  }
 
 }

@@ -19,12 +19,16 @@ public class CartManagement {
   @Autowired
   private ProductRepository productRepository;
 
+  @Autowired
+  private ShippingManagement shippingManagement;
+
   public @ResponseBody boolean makeCart(String userId) {
-    Cart isExist = cartRepository.findByUserId(userId);
-    if (isExist == null) {
+    if (!cartRepository.existsByUserId(userId)) {
       Cart newCart = new Cart();
       newCart.setId("cart-" + userId);
       newCart.setUserId(userId);
+      newCart.setProducts(null);
+      newCart.setTotalPrice(0);
       cartRepository.save(newCart);
       return true;
     }
@@ -104,4 +108,21 @@ public class CartManagement {
     return existingCart;
   }
 
+  public @ResponseBody boolean Checkout(String cartId, String shippingType) {
+    // update stock
+    Cart existingCart = cartRepository.findByUserId(cartId);
+    for (ProductList productItem : existingCart.getProducts()) {
+      Product product = productRepository.findById(productItem.getId()).orElse(null);
+      if (product != null) {
+        product.setStock(product.getStock() - productItem.getQuantity());
+        productRepository.save(product);
+      }
+    }
+    // generate shipping data
+    shippingManagement.generateShippingData(existingCart, shippingType);
+    existingCart.getProducts().clear();
+    existingCart.setTotalPrice(0);
+    cartRepository.save(existingCart);
+    return true;
+  }
 }

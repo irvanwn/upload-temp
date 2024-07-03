@@ -5,12 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class ProductList {
-
-  private String id;
-  private int quantity;
-  private String storeId;
+@NoArgsConstructor
+public class ResponseTemplate {
+  private int statusCode;
+  private String message;
+  private Object data;
 
 }
