@@ -37,27 +37,38 @@ public class CartManagement {
 
   public @ResponseBody boolean addProductToCart(String userId, String productId, int quantity) {
     Cart existingCart = cartRepository.findByUserId(userId);
-    if (existingCart != null) {
-      Product product = productRepository.findById(productId).orElse(null);
-      if (product != null) {
-        ProductList addList = new ProductList();
-        addList.setId(productId);
-        addList.setQuantity(quantity);
-        existingCart.getProducts().add(addList);
-        // calculate total price
-        double totalPrice = 0;
-        for (ProductList productItem : existingCart.getProducts()) {
-          Product productData = productRepository.findById(productItem.getId()).orElse(null);
-          if (productData != null) {
-            totalPrice += productData.getPrice() * productItem.getQuantity();
-          }
-        }
-        existingCart.setTotalPrice(totalPrice);
-        cartRepository.save(existingCart);
-        return true;
+
+    if (existingCart == null) {
+      return false;
+    }
+
+    Product product = productRepository.findById(productId).orElse(null);
+    if (product == null) {
+      return false;
+    }
+
+    ProductList addList = new ProductList();
+    addList.setId(productId);
+    addList.setQuantity(quantity);
+    addList.setStoreId(product.getStoreId());
+    existingCart.getProducts().add(addList);
+
+    double totalPrice = calculateTotalPrice(existingCart);
+    existingCart.setTotalPrice(totalPrice);
+
+    cartRepository.save(existingCart);
+    return true;
+  }
+
+  private double calculateTotalPrice(Cart cart) {
+    double totalPrice = 0;
+    for (ProductList productItem : cart.getProducts()) {
+      Product productData = productRepository.findById(productItem.getId()).orElse(null);
+      if (productData != null) {
+        totalPrice += productData.getPrice() * productItem.getQuantity();
       }
     }
-    return false;
+    return totalPrice;
   }
 
   public @ResponseBody boolean removeProductFromCart(String userId, String productId) {
@@ -108,9 +119,16 @@ public class CartManagement {
     return existingCart;
   }
 
-  public @ResponseBody boolean Checkout(String cartId, String shippingType) {
-    // update stock
-    Cart existingCart = cartRepository.findByUserId(cartId);
+  public @ResponseBody boolean Checkout(String userId) {
+    // Fetch cart by user ID
+    Cart existingCart = cartRepository.findByUserId(userId);
+
+    if (existingCart == null || existingCart.getProducts() == null) {
+      // Return false or handle the case where the cart or products are null
+      return false;
+    }
+
+    // Update stock
     for (ProductList productItem : existingCart.getProducts()) {
       Product product = productRepository.findById(productItem.getId()).orElse(null);
       if (product != null) {
@@ -118,11 +136,16 @@ public class CartManagement {
         productRepository.save(product);
       }
     }
-    // generate shipping data
-    shippingManagement.generateShippingData(existingCart, shippingType);
+
+    // Generate shipping data
+    shippingManagement.generateShippingData(existingCart);
+
+    // Clear the cart
     existingCart.getProducts().clear();
     existingCart.setTotalPrice(0);
     cartRepository.save(existingCart);
+
     return true;
   }
+
 }

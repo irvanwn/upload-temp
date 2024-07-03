@@ -1,5 +1,6 @@
 package com.ecommerce.desktop.Model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ecommerce.desktop.DTO.ProductList;
@@ -15,7 +16,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Cart {
   private String id;
-  private List<ProductList> products;
+
+  @Builder.Default
+  private List<ProductList> products = new ArrayList<>();
+
   private double totalPrice;
   private String userId;
 

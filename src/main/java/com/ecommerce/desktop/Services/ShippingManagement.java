@@ -1,5 +1,9 @@
 package com.ecommerce.desktop.Services;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -22,40 +26,88 @@ public class ShippingManagement {
   @Autowired
   private StoreRepository storeRepository;
 
-  public @ResponseBody boolean generateShippingData(Cart cart, String shippingType) {
-    Shipping shipping = new Shipping();
-
-    Store store = null;
-    ProductList product = cart.getProducts().get(0);
-    if (product != null) {
-      store = storeRepository.findById(product.getStoreId()).orElse(null);
+  public @ResponseBody boolean generateShippingData(Cart cart) {
+    if (cart == null || cart.getProducts().isEmpty()) {
+      return false;
     }
-    if (cart != null) {
-      shipping.setId("shp-" + cart.getUserId() + "-" +
-          Randomizer.generateRandomNumber(5));
-      shipping.setSender(new Person(store.getStoreName(), store.getTelpNumber(), store.getLocation()));
-      shipping.setReceiver(new Person("Dummy", "08123456789", "Jakarta"));
-      shipping.setShippingType(shippingType);
-      if (shippingType.equals("Standard")) {
-        double baseCost = 10000.0;
-        double shippingCost = baseCost * product.getQuantity();
-        shipping.setReceipt("ST-" + Randomizer.generateRandomNumber(10));
-        shipping.setShippingCost(shippingCost);
-      } else if (shippingType.equals("Express")) {
-        double baseCost = 15000.0;
-        double shippingCost = baseCost * product.getQuantity();
-        shipping.setReceipt("EX-" + Randomizer.generateRandomNumber(10));
-        shipping.setShippingCost(shippingCost);
-      } else if (shippingType.equals("Same Day")) {
-        double baseCost = 20000.0;
-        double shippingCost = baseCost * product.getQuantity();
-        shipping.setReceipt("SD-" + Randomizer.generateRandomNumber(10));
-        shipping.setShippingCost(shippingCost);
-      }
+
+    Shipping shipping = new Shipping();
+    ProductList product = cart.getProducts().get(0);
+    Optional<Store> optionalStore = storeRepository.findById(product.getStoreId());
+
+    if (!optionalStore.isPresent()) {
+      return false;
+    }
+
+    Store store = optionalStore.get();
+
+    shipping.setId("shp-" + cart.getUserId() + "-" + Randomizer.generateRandomNumber(5));
+    shipping.setSender(new Person(store.getStoreName(), store.getTelpNumber(), store.getLocation()));
+    shipping.setReceiver(new Person("Dummy", "08123456789", "Jakarta"));
+    shipping.setShippingType("Standard");
+
+    double shippingCost = calculateShippingCost(shipping.getShippingType(), product.getQuantity());
+    if (shippingCost == -1) {
+      return false;
+    }
+
+    shipping.setReceipt(generateReceipt(shipping.getShippingType()));
+    shipping.setShippingCost(shippingCost);
+
+    LocalDateTime now = LocalDateTime.now();
+    shipping.setShippingDate(now.plusDays(1).toString());
+    shipping.setExpectedArrival(now.plusDays(3).toString());
+    shipping.setShippingStatus("Pending");
+    shipping.setProducts(cart.getProducts());
+
+    shippingRepository.save(shipping);
+    return true;
+  }
+
+  public @ResponseBody boolean updateShippingStatus(String id, String status) {
+    Shipping shipping = shippingRepository.findById(id).orElse(null);
+    if (shipping != null) {
+      shipping.setShippingStatus(status);
       shippingRepository.save(shipping);
       return true;
     }
     return false;
   }
 
+  public @ResponseBody List<Shipping> getAllShippingData() {
+    return shippingRepository.findAll();
+  }
+
+  private double calculateShippingCost(String shippingType, int quantity) {
+    double baseCost;
+
+    switch (shippingType) {
+      case "Standard":
+        baseCost = 10000.0;
+        break;
+      case "Express":
+        baseCost = 15000.0;
+        break;
+      case "Same Day":
+        baseCost = 20000.0;
+        break;
+      default:
+        return -1;
+    }
+
+    return baseCost * quantity;
+  }
+
+  private String generateReceipt(String shippingType) {
+    switch (shippingType) {
+      case "Standard":
+        return "ST-" + Randomizer.generateRandomNumber(10);
+      case "Express":
+        return "EX-" + Randomizer.generateRandomNumber(10);
+      case "Same Day":
+        return "SD-" + Randomizer.generateRandomNumber(10);
+      default:
+        throw new IllegalArgumentException("Invalid shipping type: " + shippingType);
+    }
+  }
 }

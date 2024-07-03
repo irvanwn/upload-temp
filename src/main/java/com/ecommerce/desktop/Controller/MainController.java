@@ -1,5 +1,7 @@
 package com.ecommerce.desktop.Controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,10 +18,13 @@ import com.ecommerce.desktop.DTO.ProductFetchDTO;
 import com.ecommerce.desktop.DTO.ProductResponse;
 import com.ecommerce.desktop.DTO.ResponseTemplate;
 import com.ecommerce.desktop.DTO.StoreDTO;
+import com.ecommerce.desktop.Model.Cart;
 import com.ecommerce.desktop.Model.Product;
+import com.ecommerce.desktop.Model.Shipping;
 import com.ecommerce.desktop.Model.Store;
 import com.ecommerce.desktop.Services.CartManagement;
 import com.ecommerce.desktop.Services.ProductManagement;
+import com.ecommerce.desktop.Services.ShippingManagement;
 import com.ecommerce.desktop.Services.StoreManagement;
 
 @Controller
@@ -34,6 +39,9 @@ public class MainController {
 
   @Autowired
   private CartManagement cartManagement;
+
+  @Autowired
+  private ShippingManagement shippingManagement;
 
   @PostMapping("/products")
   public @ResponseBody ProductResponse addProduct(@RequestBody Product newProduct) {
@@ -57,6 +65,18 @@ public class MainController {
   @GetMapping("/products")
   public @ResponseBody ProductFetchDTO getAllProducts() {
     return new ProductFetchDTO(200, "Products fetched successfully", productManagement.getAllProducts());
+  }
+
+  @GetMapping("/products/{id}")
+  public @ResponseBody ProductResponse getProduct(@PathVariable("id") String id) {
+    Product product = productManagement.getProduct(id);
+    if (product != null) {
+      return new ProductResponse(200, "Product fetched successfully",
+          new ProductDTO(product.getName(), product.getDescription(), product.getCategory(), product.getPrice(),
+              product.getStock(), product.getImage()));
+    } else {
+      return new ProductResponse(500, "Failed to fetch product", null);
+    }
   }
 
   @PutMapping("/products/{id}")
@@ -139,6 +159,16 @@ public class MainController {
     }
   }
 
+  @GetMapping("/cart/{UserId}")
+  public @ResponseBody ResponseTemplate getCart(@PathVariable("UserId") String userId) {
+    Cart userCart = cartManagement.getCart(userId);
+    if (userCart != null) {
+      return new ResponseTemplate(200, "Cart fetched successfully", userCart);
+    } else {
+      return new ResponseTemplate(500, "Failed to fetch cart", null);
+    }
+  }
+
   @PostMapping("/cart/{UserId}/products/{ProductId}/{Quantity}")
   public @ResponseBody ResponseTemplate addProductToCart(@PathVariable("UserId") String userId,
       @PathVariable("ProductId") String productId, @PathVariable("Quantity") int quantity) {
@@ -156,6 +186,50 @@ public class MainController {
       return new ResponseTemplate(200, "Product removed from cart successfully", null);
     } else {
       return new ResponseTemplate(500, "Failed to remove product from cart", null);
+    }
+  }
+
+  @PutMapping("/cart/{UserId}/products/{ProductId}/{Quantity}")
+  public @ResponseBody ResponseTemplate updateProductQuantity(@PathVariable("UserId") String userId,
+      @PathVariable("ProductId") String productId, @PathVariable("Quantity") int quantity) {
+    if (cartManagement.updateProductQuantity(userId, productId, quantity)) {
+      return new ResponseTemplate(200, "Product quantity updated successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to update product quantity", null);
+    }
+  }
+
+  @PostMapping("/cart/{userId}/checkout")
+  public @ResponseBody ResponseTemplate checkoutCart(@PathVariable("userId") String userId) {
+    if (cartManagement.Checkout(userId)) {
+      return new ResponseTemplate(200, "Cart checked out successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to checkout cart", null);
+    }
+  }
+
+  /// Shipping Management
+  @GetMapping("/shipping")
+  public @ResponseBody ResponseTemplate getAllShippingData() {
+    List<Shipping> shippingData = shippingManagement.getAllShippingData();
+    if (shippingData != null) {
+      return new ResponseTemplate(200, "Shipping data fetched successfully", shippingData);
+    } else {
+      return new ResponseTemplate(500, "Failed to fetch shipping data", null);
+    }
+  }
+
+  @PostMapping("/shipping/{userId}")
+  public @ResponseBody ResponseTemplate generateShippingData(@PathVariable("userId") String userId) {
+    Cart userCart = cartManagement.getCart(userId);
+    if (userCart != null) {
+      if (shippingManagement.generateShippingData(userCart)) {
+        return new ResponseTemplate(200, "Shipping data generated successfully", null);
+      } else {
+        return new ResponseTemplate(500, "Failed to generate shipping data", userCart);
+      }
+    } else {
+      return new ResponseTemplate(500, "Failed to fetch cart", null);
     }
   }
 

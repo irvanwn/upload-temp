@@ -20,6 +20,7 @@ public class Shipping {
   private String shippingType;
   private double shippingCost;
   private String shippingDate;
+  private String expectedArrival;
   private String shippingStatus;
   private List<ProductList> products;
 }

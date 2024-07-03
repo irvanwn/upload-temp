@@ -26,6 +26,10 @@ public class ProductManagement {
     return true;
   }
 
+  public @ResponseBody Product getProduct(String id) {
+    return collections.findById(id).orElse(null);
+  }
+
   public @ResponseBody boolean updateProduct(Product product, String id) {
     Product existingProduct = collections.findById(id).orElse(null);
     if (existingProduct != null) {
