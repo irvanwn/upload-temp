@@ -22,6 +22,9 @@ public class CartManagement {
   @Autowired
   private ShippingManagement shippingManagement;
 
+  @Autowired
+  private TransactionManagement transactionManagement;
+
   public @ResponseBody boolean makeCart(String userId) {
     if (!cartRepository.existsByUserId(userId)) {
       Cart newCart = new Cart();
@@ -139,6 +142,35 @@ public class CartManagement {
 
     // Generate shipping data
     shippingManagement.generateShippingData(existingCart);
+
+    // Clear the cart
+    existingCart.getProducts().clear();
+    existingCart.setTotalPrice(0);
+    cartRepository.save(existingCart);
+
+    return true;
+  }
+
+  public @ResponseBody boolean Record(String userId) {
+    // Fetch cart by user ID
+    Cart existingCart = cartRepository.findByUserId(userId);
+
+    if (existingCart == null || existingCart.getProducts() == null) {
+      // Return false or handle the case where the cart or products are null
+      return false;
+    }
+
+    // Update stock
+    for (ProductList productItem : existingCart.getProducts()) {
+      Product product = productRepository.findById(productItem.getId()).orElse(null);
+      if (product != null) {
+        product.setStock(product.getStock() - productItem.getQuantity());
+        productRepository.save(product);
+      }
+    }
+
+    // Record transaction
+    transactionManagement.createTransaction(existingCart);
 
     // Clear the cart
     existingCart.getProducts().clear();

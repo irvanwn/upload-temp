@@ -22,10 +22,12 @@ import com.ecommerce.desktop.Model.Cart;
 import com.ecommerce.desktop.Model.Product;
 import com.ecommerce.desktop.Model.Shipping;
 import com.ecommerce.desktop.Model.Store;
+import com.ecommerce.desktop.Model.Transaction;
 import com.ecommerce.desktop.Services.CartManagement;
 import com.ecommerce.desktop.Services.ProductManagement;
 import com.ecommerce.desktop.Services.ShippingManagement;
 import com.ecommerce.desktop.Services.StoreManagement;
+import com.ecommerce.desktop.Services.TransactionManagement;
 
 @Controller
 @RequestMapping("/api")
@@ -42,6 +44,9 @@ public class MainController {
 
   @Autowired
   private ShippingManagement shippingManagement;
+
+  @Autowired
+  private TransactionManagement transactionManagement;
 
   @PostMapping("/products")
   public @ResponseBody ProductResponse addProduct(@RequestBody Product newProduct) {
@@ -205,6 +210,25 @@ public class MainController {
       return new ResponseTemplate(200, "Cart checked out successfully", null);
     } else {
       return new ResponseTemplate(500, "Failed to checkout cart", null);
+    }
+  }
+
+  @PostMapping("/cart/{userId}/checkout2")
+  public @ResponseBody ResponseTemplate checkoutCart2(@PathVariable("userId") String userId) {
+    if (cartManagement.Record(userId)) {
+      return new ResponseTemplate(200, "Cart checked out successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to checkout cart", null);
+    }
+  }
+
+  @PostMapping("/transaction/{transactionId}/paid/{paymentMethod}")
+  public @ResponseBody ResponseTemplate transactionPaid(@PathVariable("transactionId") String transactionId,
+      @PathVariable("paymentMethod") String paymentMethod) {
+    if (transactionManagement.paytransaction(transactionId, paymentMethod)) {
+      return new ResponseTemplate(200, "Transaction paid successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to pay transaction", null);
     }
   }
 
