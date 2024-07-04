@@ -1,5 +1,7 @@
 package com.ecommerce.desktop.Services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -50,11 +52,24 @@ public class CartManagement {
       return false;
     }
 
-    ProductList addList = new ProductList();
-    addList.setId(productId);
-    addList.setQuantity(quantity);
-    addList.setStoreId(product.getStoreId());
-    existingCart.getProducts().add(addList);
+    boolean productExistsInCart = false;
+    List<ProductList> products = existingCart.getProducts();
+    for (int i = 0; i < products.size(); i++) {
+      ProductList productList = products.get(i);
+      if (productList.getId().equals(productId)) {
+        productList.setQuantity(productList.getQuantity() + quantity);
+        productExistsInCart = true;
+        break;
+      }
+    }
+
+    if (!productExistsInCart) {
+      ProductList addList = new ProductList();
+      addList.setId(productId);
+      addList.setQuantity(quantity);
+      addList.setStoreId(product.getStoreId());
+      products.add(addList);
+    }
 
     double totalPrice = calculateTotalPrice(existingCart);
     existingCart.setTotalPrice(totalPrice);
