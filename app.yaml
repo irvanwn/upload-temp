@@ -1,0 +1,14 @@
+service: java-spring
+
+runtime: java
+env: flex
+
+runtime_config:
+  jdk: openjdk11
+
+handlers:
+- url: /.*
+  script: this field is required, but ignored
+
+env_variables:
+  SPRING_DATA_MONGODB_URI: 'mongodb+srv://672021019:trwebservice@trcluster.f0qe8vj.mongodb.net/desktop-app'
